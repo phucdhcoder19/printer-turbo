@@ -1,0 +1,25 @@
+# config.example.toml — ĐÂY là file được commit vào git
+# Người dùng copy thành config.toml và điền giá trị thật
+
+[app]
+llm_provider = "openai"           # openai, gemini, ollama, deepseek...
+model_name = "gpt-4o-mini"
+api_key = ""                      # ← người dùng điền
+language = "vi"
+
+video_concat_mode = "random"      # random, sequential
+video_aspect = "9:16"             # 9:16 (portrait), 16:9 (landscape)
+video_clip_duration = 5           # giây mỗi clip
+threads = 4                       # số luồng xử lý video
+
+[azure]
+speech_key = ""
+speech_region = "eastus"
+
+[proxy]
+enable = false
+http = "http://127.0.0.1:7890"
+https = "http://127.0.0.1:7890"
+
+[ui]
+language = "vi"
