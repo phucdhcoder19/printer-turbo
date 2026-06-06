@@ -7,6 +7,7 @@ model_name = "qwen3:4b"
 api_key = ""                      # Ollama không cần; để trống cũng được
 base_url = "http://localhost:11434/v1"   # endpoint Ollama (PHẢI có /v1)
 language = "vi"
+pexels_api_key= "VjfvkY84uits7KXDdgNH7ljDgPUEBWAJzESYG0f6fWVlnRIOEblkiW52"
 
 video_concat_mode = "random"      # random, sequential
 video_aspect = "9:16"             # 9:16 (portrait), 16:9 (landscape)

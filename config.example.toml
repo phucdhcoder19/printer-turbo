@@ -6,6 +6,7 @@ llm_provider = "openai"           # openai, gemini, ollama, deepseek...
 model_name = "gpt-4o-mini"
 api_key = ""                      # ← người dùng điền
 language = "vi"
+pexels_api_key= ""
 
 video_concat_mode = "random"      # random, sequential
 video_aspect = "9:16"             # 9:16 (portrait), 16:9 (landscape)

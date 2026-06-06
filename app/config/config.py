@@ -22,6 +22,7 @@ class AppConfig(BaseModel):
     # base_url: endpoint của LLM. Ollama dùng OpenAI-compatible API tại /v1.
     # Để trống thì _call_llm tự điền default theo provider.
     base_url: str = ""
+    pexels_api_key: str = ""
     language: str = "vi"
     video_concat_mode: str = "random"
     video_aspect: str = "9:16"

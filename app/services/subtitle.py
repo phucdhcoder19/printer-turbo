@@ -14,23 +14,24 @@ def _group_words_into_segments(
     current_words = [] 
 
     for word in words:
-      current_words.append(word)
-        # Nếu đã đủ số từ hoặc thời lượng, tạo segment mới
-      duration = current_words[-1]["end"] - current_words[0]["start"]
-      if len(current_words) >= max_words or duration >= max_duration:
-          segments.append({
-              "text": " ".join(w["text"] for w in current_words),
-              "start": current_words[0]["start"],
-              "end": current_words[-1]["end"],
-          })
-          current_words = []
+        current_words.append(word)
+        # Nếu đã đủ số từ hoặc thời lượng, chốt 1 segment
+        duration = current_words[-1]["end"] - current_words[0]["start"]
+        if len(current_words) >= max_words or duration >= max_duration:
+            segments.append({
+                "text": " ".join(w["text"] for w in current_words),
+                "start": current_words[0]["start"],
+                "end": current_words[-1]["end"],
+            })
+            current_words = []
 
-      if current_words:
-          segments.append({
-              "text": " ".join(w["text"] for w in current_words),
-              "start": current_words[0]["start"],
-              "end": current_words[-1]["end"],
-          })
+    # Phần dư cuối cùng — NGANG HÀNG với `for`, chỉ chạy 1 lần sau vòng lặp
+    if current_words:
+        segments.append({
+            "text": " ".join(w["text"] for w in current_words),
+            "start": current_words[0]["start"],
+            "end": current_words[-1]["end"],
+        })
     return segments
 
 def _format_timestamp(seconds: float) -> str:
@@ -44,11 +45,23 @@ def _format_timestamp(seconds: float) -> str:
 def create_srt(subtitle_segments: list[dict], output_path: Path):
     lines = []
     for i, seg in enumerate(subtitle_segments, start=1):
-        lines.append(str(i))
+        lines.append(str(i))                        # số thứ tự
         start = _format_timestamp(seg["start"])
         end = _format_timestamp(seg["end"])
-        text = seg["text"]
-        lines.append(seg["text"])
-        lines.append("")  # dòng trống giữa các segment
+        lines.append(f"{start} --> {end}")          # dòng thời gian (bắt buộc của SRT)
+        lines.append(seg["text"])                   # nội dung phụ đề
+        lines.append("")                            # dòng trống ngăn cách các segment
     output_path.write_text("\n".join(lines), encoding="utf-8")
     return output_path
+
+
+# ──────────────────────────────────────────────
+# PUBLIC API — task.py (Phase 6) gọi hàm này
+# ──────────────────────────────────────────────
+def generate_subtitle_from_timestamps(
+    word_timestamps: list[dict],
+    output_path: Path,
+) -> Path:
+    """Public API: word timestamps (từ Phase 2) → file .srt"""
+    segments = _group_words_into_segments(word_timestamps)
+    return create_srt(segments, output_path)

@@ -10,4 +10,5 @@ dependencies = [
     "tomli>=2.4.1",
     "tomli-w>=1.2.0",
     "edge-tts>=7.0.0",
+    "httpx>=0.28.0",
 ]
