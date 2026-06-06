@@ -16,9 +16,12 @@ from pydantic import BaseModel
 # ──────────────────────────────────────────────
 
 class AppConfig(BaseModel):
-    llm_provider: str = "openai"
-    model_name: str = "gpt-4o-mini"
+    llm_provider: str = "ollama"
+    model_name: str = "qwen3:4b"
     api_key: str = ""
+    # base_url: endpoint của LLM. Ollama dùng OpenAI-compatible API tại /v1.
+    # Để trống thì _call_llm tự điền default theo provider.
+    base_url: str = ""
     language: str = "vi"
     video_concat_mode: str = "random"
     video_aspect: str = "9:16"

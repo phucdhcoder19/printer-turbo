@@ -2,9 +2,10 @@
 # Người dùng copy thành config.toml và điền giá trị thật
 
 [app]
-llm_provider = "openai"           # openai, gemini, ollama, deepseek...
-model_name = "gpt-4o-mini"
-api_key = ""                      # ← người dùng điền
+llm_provider = "ollama"
+model_name = "qwen3:4b"
+api_key = ""                      # Ollama không cần; để trống cũng được
+base_url = "http://localhost:11434/v1"   # endpoint Ollama (PHẢI có /v1)
 language = "vi"
 
 video_concat_mode = "random"      # random, sequential
