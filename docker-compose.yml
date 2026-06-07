@@ -1,0 +1,113 @@
+# docker-compose.yml — chạy toàn bộ hệ thống MoneyPrinterTurbo mở rộng
+#
+# Services:
+#   postgres  → DB cho marketing data (NestJS)
+#   redis     → queue job (lên lịch đăng bài, render nền)
+#   fastapi   → pipeline tạo video (Python, giữ nguyên)
+#   nestjs    → backend marketing + proxy sang FastAPI
+#   react     → frontend (Vite dev hoặc nginx prod)
+#
+# Cách chạy:  docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mpt-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mpt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mpt_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-mpt_marketing}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mpt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mpt-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: mpt-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mpt-net
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: mpt-fastapi
+    restart: unless-stopped
+    # config.toml được mount để chỉnh không cần rebuild image
+    volumes:
+      - ./config.toml:/app/config.toml
+      - ./storage:/app/storage
+      - ./resource:/app/resource
+    ports:
+      - "8080:8080"
+    networks:
+      - mpt-net
+
+  nestjs:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mpt-nestjs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      fastapi:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Trong mạng docker, gọi nhau bằng TÊN SERVICE (không phải localhost)
+      DATABASE_URL: postgres://${POSTGRES_USER:-mpt}:${POSTGRES_PASSWORD:-mpt_secret}@postgres:5432/${POSTGRES_DB:-mpt_marketing}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FASTAPI_URL: http://fastapi:8080
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+    ports:
+      - "3000:3000"
+    networks:
+      - mpt-net
+
+  react:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Browser gọi NestJS qua HOST (localhost), không qua mạng docker
+        VITE_API_URL: http://localhost:3000
+    container_name: mpt-react
+    restart: unless-stopped
+    depends_on:
+      - nestjs
+    ports:
+      - "5173:80"   # nginx phục vụ build production trên cổng 80 → map ra 5173
+    networks:
+      - mpt-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mpt-net:
+    driver: bridge

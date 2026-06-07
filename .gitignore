@@ -8,3 +8,16 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Node (frontend + backend)
+node_modules/
+frontend/dist/
+backend/dist/
+
+# Env / secrets
+.env
+.env.local
+
+# Editor
+.idea/
+*.log

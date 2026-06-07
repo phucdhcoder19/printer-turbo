@@ -1,0 +1,30 @@
+# Dockerfile.fastapi — image cho pipeline tạo video (Python + uv)
+FROM python:3.11-slim
+
+# ffmpeg cần cho moviepy render video
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài uv (trình quản lý package nhanh)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+# Cài dependencies trước (tận dụng cache layer khi code đổi mà deps không đổi)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+# Copy source code
+COPY app ./app
+COPY main.py ./
+
+# uv tạo venv ở .venv → đưa vào PATH
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8080
+
+# Chạy FastAPI (app/asgi.py sẽ được tạo ở Phase 7).
+# Tới khi có asgi.py, service này mới start thật được.
+CMD ["uvicorn", "app.asgi:app", "--host", "0.0.0.0", "--port", "8080"]
