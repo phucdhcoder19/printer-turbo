@@ -5,6 +5,8 @@ export { Input, Textarea } from './Input';
 export { Select } from './Select';
 export { Label, FormError, Field } from './Form';
 export { Checkbox, Radio, Toggle } from './Choice';
+export { Segmented } from './Segmented';
+export { Dropzone } from './Dropzone';
 export { Badge, StatusBadge } from './Badge';
 export { PlatformBadge } from './PlatformBadge';
 export {

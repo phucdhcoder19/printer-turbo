@@ -11,7 +11,7 @@ import {
   type ChannelStatus,
   type SocialAccount,
 } from './api';
-import { getTeamId } from './session';
+import { useAuth } from './useAuth';
 import type { Platform } from '../constants/platforms';
 
 interface ChannelsContextValue {
@@ -26,19 +26,21 @@ interface ChannelsContextValue {
 const ChannelsContext = createContext<ChannelsContextValue | null>(null);
 
 /**
- * Nguồn dữ liệu kênh — gọi NestJS /api/social-accounts.
- * Mọi thao tác connect/disconnect đều refetch để UI luôn khớp DB.
+ * Dữ liệu kênh — gọi NestJS /api/social-accounts theo teamId của user đăng nhập.
  */
 export function ChannelsProvider({ children }: { children: ReactNode }) {
-  const teamId = getTeamId();
+  const { user } = useAuth();
+  const teamId = user?.teamId;
+
   const [channels, setChannels] = useState<SocialAccount[]>([]);
   const [status, setStatus] = useState<ChannelStatus>({
     connected: 0,
     total: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (!teamId) return;
     const [list, st] = await Promise.all([
       socialAccountsApi.list(teamId),
       socialAccountsApi.status(teamId),
@@ -48,22 +50,27 @@ export function ChannelsProvider({ children }: { children: ReactNode }) {
   }, [teamId]);
 
   useEffect(() => {
+    // Chưa đăng nhập → để rỗng
+    if (!teamId) {
+      setChannels([]);
+      setStatus({ connected: 0, total: 0 });
+      return;
+    }
     let alive = true;
     setLoading(true);
     refresh()
-      .catch(() => {
-        /* backend chưa chạy → để danh sách rỗng, action sẽ báo toast lỗi */
-      })
+      .catch(() => {})
       .finally(() => {
         if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [refresh]);
+  }, [teamId, refresh]);
 
   const connect = useCallback(
     async (platform: Platform) => {
+      if (!teamId) return;
       await socialAccountsApi.connect(platform, teamId);
       await refresh();
     },

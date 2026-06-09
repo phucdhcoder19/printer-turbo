@@ -9,6 +9,7 @@ import { CalendarModule } from "./modules/calendar/calendar.module";
 import { AiModule } from "./modules/ai/ai.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { SocialAccountsModule } from "./modules/social-accounts/social-accounts.module";
+import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { SocialAccountsModule } from "./modules/social-accounts/social-accounts.
     AiModule, // AI tối ưu content
     AnalyticsModule, // thống kê hiệu quả
     SocialAccountsModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

@@ -51,7 +51,7 @@ export function Modal({
       >
         {title && (
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-section font-semibold">{title}</h2>
+            <h2 className="text-section font-display font-semibold">{title}</h2>
             <button
               onClick={onClose}
               aria-label="Đóng"

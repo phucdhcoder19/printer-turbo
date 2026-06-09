@@ -17,7 +17,11 @@ export class PostsService {
     @InjectRepository(PostTarget) private targetRepo: Repository<PostTarget>,
   ) {}
 
-  async create(createPostDto: CreatePostDto): Promise<Post> {
+  async create(
+    createPostDto: CreatePostDto,
+    teamId: string,
+    userId: string,
+  ): Promise<Post> {
     const targets = createPostDto.targets.map((t) =>
       this.targetRepo.create({
         platform: t.platform,
@@ -28,7 +32,8 @@ export class PostsService {
       }),
     );
     const post = this.postRepo.create({
-      teamId: createPostDto.teamId,
+      teamId,
+      createdById: userId,
       title: createPostDto.title,
       baseCaption: createPostDto.baseCaption,
       contentPlanId: createPostDto.contentPlanId,
@@ -38,8 +43,12 @@ export class PostsService {
     return this.postRepo.save(post);
   }
 
-  findAll(): Promise<Post[]> {
-    return this.postRepo.find({ relations: { targets: true } });
+  findAll(teamId: string): Promise<Post[]> {
+    return this.postRepo.find({
+      where: { teamId },
+      relations: { targets: true },
+      order: { createdAt: "DESC" },
+    });
   }
 
   // ----- LẤY 1 bài -----
@@ -50,6 +59,13 @@ export class PostsService {
     });
     if (!post) throw new NotFoundException("Post not found");
     return post;
+  }
+
+  async remove(id: string): Promise<{ success: boolean }> {
+    const post = await this.postRepo.findOne({ where: { id } });
+    if (!post) throw new NotFoundException("Post not found");
+    await this.postRepo.remove(post);
+    return { success: true };
   }
 
   // ----- ĐỔI trạng thái 1 target → TÍNH LẠI status tổng -----

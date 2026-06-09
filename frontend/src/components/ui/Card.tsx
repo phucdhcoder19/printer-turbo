@@ -26,7 +26,10 @@ export function CardTitle({
   ...props
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-card-title font-semibold', className)} {...props} />
+    <h3
+      className={cn('text-card-title font-display font-semibold', className)}
+      {...props}
+    />
   );
 }
 
@@ -85,7 +88,9 @@ export function StatCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-bold tracking-tight">{value}</p>
+      <p className="mt-3 text-2xl font-display font-bold tracking-tight">
+        {value}
+      </p>
       <p className="mt-0.5 text-label text-muted-foreground">{label}</p>
     </Card>
   );

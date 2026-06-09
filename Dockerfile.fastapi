@@ -11,20 +11,20 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Cài dependencies trước (tận dụng cache layer khi code đổi mà deps không đổi)
+# Cài dependencies trước (tận dụng cache layer khi code đổi mà deps không đổi).
+# Bỏ --frozen để tự cập nhật nếu uv.lock chưa khớp pyproject (vd vừa thêm
+# fastapi/uvicorn). --no-dev: không cài dependency nhóm dev.
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --no-dev
 
 # Copy source code
 COPY app ./app
 COPY main.py ./
 
-# uv tạo venv ở .venv → đưa vào PATH
-ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8080
 
-# Chạy FastAPI (app/asgi.py sẽ được tạo ở Phase 7).
-# Tới khi có asgi.py, service này mới start thật được.
-CMD ["uvicorn", "app.asgi:app", "--host", "0.0.0.0", "--port", "8080"]
+# Dùng `uv run` để chạy trong venv của uv — chắc ăn hơn gọi uvicorn trực tiếp
+# (không phụ thuộc PATH). Cần app/asgi.py (Phase 7 — đã có).
+CMD ["uv", "run", "uvicorn", "app.asgi:app", "--host", "0.0.0.0", "--port", "8080"]

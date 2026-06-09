@@ -5,12 +5,22 @@ import {
   ThumbsUp,
   Video,
 } from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { PageHeader } from '../components/layout/PageHeader';
 import { StatCard, Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { StatusBadge } from '../components/ui/Badge';
 import { PlatformBadge } from '../components/ui/PlatformBadge';
 import { EmptyState } from '../components/ui/Feedback';
 import { Button } from '../components/ui/Button';
+import { MOCK_ENGAGEMENT_7D } from '../constants/mock';
 import type { Platform } from '../constants/platforms';
 import type { PostStatus } from '../constants/statuses';
 
@@ -60,6 +70,56 @@ export function DashboardPage() {
           value={5}
         />
       </div>
+
+      {/* Engagement chart */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Tương tác 7 ngày qua</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={MOCK_ENGAGEMENT_7D} margin={{ left: -16 }}>
+              <defs>
+                <linearGradient id="fillEngagement" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#6366F1" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(var(--border))"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 8,
+                  border: '1px solid hsl(var(--border))',
+                  background: 'hsl(var(--card))',
+                  fontSize: 12,
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#6366F1"
+                strokeWidth={2}
+                fill="url(#fillEngagement)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* 2 columns */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

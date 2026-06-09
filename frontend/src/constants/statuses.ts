@@ -3,6 +3,7 @@ export type PostStatus =
   | 'scheduled'
   | 'publishing'
   | 'published'
+  | 'partially_failed'
   | 'failed';
 
 export interface StatusConfig {
@@ -37,6 +38,12 @@ export const STATUS_CONFIG: Record<PostStatus, StatusConfig> = {
     badge:
       'bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-300',
     dot: 'bg-green-500',
+  },
+  partially_failed: {
+    label: 'Partial',
+    badge:
+      'bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-300',
+    dot: 'bg-orange-500',
   },
   failed: {
     label: 'Failed',

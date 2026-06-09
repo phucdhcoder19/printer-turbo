@@ -38,7 +38,10 @@ const config: Config = {
         },
       },
       fontFamily: {
+        // Body mặc định
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Heading/tiêu đề: dùng class `font-display`
+        display: ['Poppins', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       // Thang font nhất quán (chỉ size + line-height; weight áp riêng để tránh
       // xung đột khi kết hợp với font-medium/semibold).

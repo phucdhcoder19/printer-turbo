@@ -1,9 +1,10 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   Calendar,
   FileText,
   LayoutDashboard,
+  LogOut,
   Plus,
   Settings,
   Video,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Avatar } from '../ui/Avatar';
+import { useAuth } from '../../lib/useAuth';
 import { ChannelsSection } from './ChannelsSection';
 
 interface NavItemDef {
@@ -39,6 +41,14 @@ const GROUPS: { title: string; items: NavItemDef[] }[] = [
 ];
 
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
+
   return (
     <aside
       className={cn(
@@ -48,11 +58,13 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-primary font-bold text-primary-foreground">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-primary font-display font-bold text-primary-foreground">
           M
         </div>
         {!collapsed && (
-          <span className="text-card-title font-semibold">Marketing Hub</span>
+          <span className="text-card-title font-display font-semibold">
+            Marketing Hub
+          </span>
         )}
       </div>
 
@@ -89,14 +101,26 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             collapsed && 'justify-center',
           )}
         >
-          <Avatar name="An Nguyen" size="sm" />
+          <Avatar name={user?.name ?? 'User'} size="sm" />
           {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-label font-semibold text-foreground">
-                An Nguyen
-              </p>
-              <p className="truncate text-[11px] text-muted-foreground">Admin</p>
-            </div>
+            <>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-label font-semibold text-foreground">
+                  {user?.name ?? 'User'}
+                </p>
+                <p className="truncate text-[11px] capitalize text-muted-foreground">
+                  {user?.role ?? ''}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                aria-label="Đăng xuất"
+                title="Đăng xuất"
+                className="cursor-pointer rounded-button p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </div>

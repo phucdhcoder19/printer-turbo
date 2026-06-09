@@ -29,10 +29,6 @@ export class CreatePostTargetDto {
 }
 
 export class CreatePostDto {
-  // Tạm thời nhận teamId từ body. Sau khi có JWT auth → lấy từ token.
-  @IsUUID()
-  teamId: string;
-
   @IsString()
   title: string;
 
