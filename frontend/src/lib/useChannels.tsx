@@ -9,16 +9,20 @@ import {
 import {
   socialAccountsApi,
   type ChannelStatus,
+  type ConnectWordpressBody,
   type SocialAccount,
 } from './api';
 import { useAuth } from './useAuth';
-import type { Platform } from '../constants/platforms';
+import { CONNECT_METHOD, type Platform } from '../constants/platforms';
 
 interface ChannelsContextValue {
   channels: SocialAccount[];
   status: ChannelStatus;
   loading: boolean;
+  /** facebook/tiktok → redirect OAuth; nền tảng mock → tạo account demo. */
   connect: (platform: Platform) => Promise<void>;
+  /** WordPress → kết nối bằng Application Password. */
+  connectWordpress: (body: ConnectWordpressBody) => Promise<void>;
   disconnect: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -26,7 +30,8 @@ interface ChannelsContextValue {
 const ChannelsContext = createContext<ChannelsContextValue | null>(null);
 
 /**
- * Dữ liệu kênh — gọi NestJS /api/social-accounts theo teamId của user đăng nhập.
+ * Dữ liệu kênh — gọi NestJS /api/social-accounts. teamId/userId lấy từ JWT
+ * (token tự gắn qua interceptor), không truyền tay.
  */
 export function ChannelsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -42,8 +47,8 @@ export function ChannelsProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (!teamId) return;
     const [list, st] = await Promise.all([
-      socialAccountsApi.list(teamId),
-      socialAccountsApi.status(teamId),
+      socialAccountsApi.list(),
+      socialAccountsApi.status(),
     ]);
     setChannels(list);
     setStatus(st);
@@ -71,7 +76,25 @@ export function ChannelsProvider({ children }: { children: ReactNode }) {
   const connect = useCallback(
     async (platform: Platform) => {
       if (!teamId) return;
-      await socialAccountsApi.connect(platform, teamId);
+      const method = CONNECT_METHOD[platform];
+      if (method === 'oauth') {
+        // Rời trang sang nền tảng để xin quyền. Sau khi đồng ý, backend xử lý
+        // callback rồi redirect ngược về /settings?channel=...&result=...
+        const { authorizeUrl } = await socialAccountsApi.getConnectUrl(platform);
+        window.location.href = authorizeUrl;
+        return;
+      }
+      // mock (instagram/youtube/threads/twitter)
+      await socialAccountsApi.connect(platform);
+      await refresh();
+    },
+    [teamId, refresh],
+  );
+
+  const connectWordpress = useCallback(
+    async (body: ConnectWordpressBody) => {
+      if (!teamId) return;
+      await socialAccountsApi.connectWordpress(body);
       await refresh();
     },
     [teamId, refresh],
@@ -87,7 +110,15 @@ export function ChannelsProvider({ children }: { children: ReactNode }) {
 
   return (
     <ChannelsContext.Provider
-      value={{ channels, status, loading, connect, disconnect, refresh }}
+      value={{
+        channels,
+        status,
+        loading,
+        connect,
+        connectWordpress,
+        disconnect,
+        refresh,
+      }}
     >
       {children}
     </ChannelsContext.Provider>

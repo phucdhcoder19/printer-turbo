@@ -1,10 +1,10 @@
-import { IsOptional, IsString, IsUUID } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
+/**
+ * Body cho mock connect (instagram/youtube/threads/twitter — chưa có OAuth thật).
+ * teamId lấy từ JWT (@CurrentUser), không truyền qua body nữa.
+ */
 export class ConnectChannelDto {
-  // Tạm truyền teamId từ body. Sau có JWT → lấy từ token.
-  @IsUUID()
-  teamId: string;
-
   @IsOptional()
   @IsString()
   accountName?: string;

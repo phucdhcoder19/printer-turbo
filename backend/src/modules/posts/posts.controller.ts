@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -8,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { PostsService } from "./posts.service";
+import { PostPublishService } from "./post-publish.service";
 import { CreatePostDto } from "./dto/create-post.dto";
 import { TargetStatus } from "../../common/enums";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -23,12 +25,21 @@ interface RequestUser {
 @UseGuards(JwtAuthGuard)
 @Controller("posts")
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly publishService: PostPublishService,
+  ) {}
 
   //Route: api/posts
   @Post()
   create(@CurrentUser() user: RequestUser, @Body() dto: CreatePostDto) {
     return this.postsService.create(dto, user.teamId, user.userId);
+  }
+
+  /** Đăng NGAY bài lên tất cả nền tảng của nó. */
+  @Post(":id/publish")
+  publish(@CurrentUser() user: RequestUser, @Param("id") id: string) {
+    return this.publishService.publishPost(id, user.teamId, user.userId);
   }
 
   @Get()
@@ -47,5 +58,19 @@ export class PostsController {
     @Body("status") status: TargetStatus,
   ) {
     return this.postsService.updateTargetStatus(targetId, status);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.postsService.remove(id);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body() dto: CreatePostDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.postsService.update(id, user.teamId, dto);
   }
 }

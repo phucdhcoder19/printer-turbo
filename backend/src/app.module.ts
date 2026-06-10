@@ -1,3 +1,4 @@
+import { join } from "path";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -10,6 +11,7 @@ import { AiModule } from "./modules/ai/ai.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { SocialAccountsModule } from "./modules/social-accounts/social-accounts.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { MediaModule } from "./modules/media/media.module";
 
 @Module({
   imports: [
@@ -17,6 +19,10 @@ import { AuthModule } from "./modules/auth/auth.module";
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      // Luôn nạp backend/.env theo đường dẫn TUYỆT ĐỐI (không phụ thuộc thư mục
+      // chạy). __dirname = backend/src (dev) hoặc backend/dist (build) → '..'
+      // đều ra thư mục backend → backend/.env.
+      envFilePath: join(__dirname, "..", ".env"),
     }),
 
     // 2) Kết nối PostgreSQL qua TypeORM
@@ -42,6 +48,7 @@ import { AuthModule } from "./modules/auth/auth.module";
     AnalyticsModule, // thống kê hiệu quả
     SocialAccountsModule,
     AuthModule,
+    MediaModule,
   ],
 })
 export class AppModule {}

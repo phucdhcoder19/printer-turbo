@@ -4,7 +4,15 @@ import { PostTarget } from "./entities/post-target.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Post } from "./entities/post.entity";
+import { PostMedia } from "./entities/post-media.entity";
 import { CreatePostDto } from "./dto/create-post.dto";
+
+// Quan hệ dùng chung khi đọc 1 bài (kèm targets + media đã gắn).
+// (Thứ tự media theo position được sort ở client/khi publish, tránh phụ thuộc
+//  order lồng quan hệ của TypeORM cho OneToMany.)
+const POST_RELATIONS = {
+  relations: { targets: true, media: { media: true } },
+};
 /**
  * Logic nghiệp vụ cho bài đăng.
  * Hiện CRUD vẫn là stub — nhưng computePostStatus() đã sẵn sàng để gọi
@@ -15,6 +23,7 @@ export class PostsService {
   constructor(
     @InjectRepository(Post) private postRepo: Repository<Post>,
     @InjectRepository(PostTarget) private targetRepo: Repository<PostTarget>,
+    @InjectRepository(PostMedia) private postMediaRepo: Repository<PostMedia>,
   ) {}
 
   async create(
@@ -40,13 +49,15 @@ export class PostsService {
       targets,
     });
     post.status = this.computePostStatus(targets);
-    return this.postRepo.save(post);
+    const saved = await this.postRepo.save(post);
+    await this.syncMedia(saved.id, createPostDto.mediaIds);
+    return this.findOne(saved.id);
   }
 
   findAll(teamId: string): Promise<Post[]> {
     return this.postRepo.find({
       where: { teamId },
-      relations: { targets: true },
+      ...POST_RELATIONS,
       order: { createdAt: "DESC" },
     });
   }
@@ -55,10 +66,61 @@ export class PostsService {
   async findOne(id: string): Promise<Post> {
     const post = await this.postRepo.findOne({
       where: { id },
-      relations: { targets: true },
+      ...POST_RELATIONS,
     });
     if (!post) throw new NotFoundException("Post not found");
     return post;
+  }
+
+  /**
+   * Đồng bộ ảnh/video đính kèm: xoá post_media cũ → tạo lại theo thứ tự mediaIds.
+   * mediaIds === undefined → không đụng tới (vd update không gửi field này).
+   */
+  private async syncMedia(postId: string, mediaIds?: string[]): Promise<void> {
+    if (mediaIds === undefined) return;
+    await this.postMediaRepo.delete({ postId });
+    if (mediaIds.length === 0) return;
+    await this.postMediaRepo.save(
+      mediaIds.map((mediaId, position) =>
+        this.postMediaRepo.create({ postId, mediaId, position }),
+      ),
+    );
+  }
+
+  async update(
+    id: string,
+    teamId: string,
+    updatePostDto: Partial<CreatePostDto>,
+  ): Promise<Post> {
+    const post = await this.postRepo.findOne({
+      where: { id },
+      relations: { targets: true },
+    });
+    if (!post) throw new NotFoundException("Post not found");
+    if (post.teamId !== teamId)
+      throw new NotFoundException("Post not found in your team");
+    post.title = updatePostDto.title ?? post.title;
+    post.baseCaption = updatePostDto.baseCaption ?? post.baseCaption;
+    // Không cho update content
+    // Thay TOÀN BỘ targets: xoá cũ → tạo mới (đơn giản, chắc đúng)
+    if (updatePostDto.targets) {
+      await this.targetRepo.delete({ postId: id });
+      const targets = updatePostDto.targets?.map((t) =>
+        this.targetRepo.create({
+          postId: id,
+          platform: t.platform,
+          caption: t.caption ?? null,
+          hashtags: t.hashtags ?? [],
+          scheduledAt: t.scheduledAt ? new Date(t.scheduledAt) : null,
+          status: t.scheduledAt ? TargetStatus.SCHEDULED : TargetStatus.DRAFT,
+        }),
+      );
+      post.targets = await this.targetRepo.save(targets);
+    }
+    post.status = this.computePostStatus(post.targets);
+    await this.postRepo.save(post);
+    await this.syncMedia(id, updatePostDto.mediaIds);
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<{ success: boolean }> {

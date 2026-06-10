@@ -40,6 +40,12 @@ export class CreatePostDto {
   @IsUUID()
   contentPlanId?: string;
 
+  // Ảnh/video đính kèm (id từ bảng media). Thứ tự mảng = thứ tự hiển thị.
+  @IsOptional()
+  @IsArray()
+  @IsUUID("all", { each: true })
+  mediaIds?: string[];
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreatePostTargetDto)

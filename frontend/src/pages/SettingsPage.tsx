@@ -13,6 +13,7 @@ import { PlatformBadge } from '../components/ui/PlatformBadge';
 import { EmptyState, Skeleton } from '../components/ui/Feedback';
 import { ConnectChannelModal } from '../components/channels/ConnectChannelModal';
 import { useChannels } from '../lib/useChannels';
+import { useOAuthResult } from '../lib/useOAuthResult';
 import { useToast } from '../components/ui/Toast';
 import { PLATFORMS } from '../constants/platforms';
 import type { ConnectionStatus } from '../lib/api';
@@ -41,6 +42,8 @@ export function SettingsPage() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const toast = useToast();
+  // Bắt kết quả callback OAuth (?channel=...&result=...) sau khi kết nối FB/TikTok.
+  useOAuthResult();
 
   async function handleDisconnect(id: string, label: string) {
     setBusy(id);

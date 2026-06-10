@@ -173,8 +173,12 @@ export function ContentPage() {
             </THead>
             <TBody>
               {rows.map((p) => (
-                <TR key={p.id}>
-                  <TD>
+                <TR
+                  key={p.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/content/${p.id}/edit`)}
+                >
+                  <TD onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selected.has(p.id)}
                       onChange={() => toggle(p.id)}

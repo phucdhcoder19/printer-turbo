@@ -106,19 +106,34 @@ export interface ChannelStatus {
   total: number;
 }
 
+export interface ConnectWordpressBody {
+  siteUrl: string;
+  username: string;
+  appPassword: string;
+}
+
+// teamId/userId lấy từ JWT (interceptor tự gắn token) → không truyền tay nữa.
 export const socialAccountsApi = {
-  list: (teamId: string) =>
+  list: () =>
+    api.get<SocialAccount[]>('/api/social-accounts').then((r) => r.data),
+  status: () =>
+    api.get<ChannelStatus>('/api/social-accounts/status').then((r) => r.data),
+  // OAuth (facebook/tiktok): lấy URL để redirect trình duyệt sang nền tảng.
+  getConnectUrl: (platform: Platform) =>
     api
-      .get<SocialAccount[]>('/api/social-accounts', { params: { teamId } })
+      .get<{ authorizeUrl: string }>(
+        `/api/social-accounts/connect/${platform}/url`,
+      )
       .then((r) => r.data),
-  status: (teamId: string) =>
+  // WordPress: kết nối bằng Application Password.
+  connectWordpress: (body: ConnectWordpressBody) =>
     api
-      .get<ChannelStatus>('/api/social-accounts/status', { params: { teamId } })
+      .post<SocialAccount>('/api/social-accounts/connect/wordpress', body)
       .then((r) => r.data),
-  connect: (platform: Platform, teamId: string, accountName?: string) =>
+  // Mock connect cho nền tảng chưa có OAuth thật.
+  connect: (platform: Platform, accountName?: string) =>
     api
       .post<SocialAccount>(`/api/social-accounts/connect/${platform}`, {
-        teamId,
         accountName,
       })
       .then((r) => r.data),
@@ -135,9 +150,17 @@ export interface PostTargetDto {
   hashtags: string[];
   status: PostStatus;
   scheduledAt: string | null;
+  externalUrl: string | null;
+  errorMessage: string | null;
   currentLikes: number;
   currentComments: number;
   currentShares: number;
+}
+
+export interface PostMediaDto {
+  id: string;
+  position: number;
+  media: MediaDto;
 }
 
 export interface PostDto {
@@ -147,12 +170,14 @@ export interface PostDto {
   status: PostStatus;
   createdAt: string;
   targets: PostTargetDto[];
+  media: PostMediaDto[];
 }
 
 export interface CreatePostBody {
   title: string;
   baseCaption?: string;
   contentPlanId?: string;
+  mediaIds?: string[];
   targets: {
     platform: Platform;
     caption?: string;
@@ -166,6 +191,11 @@ export const postsApi = {
   get: (id: string) => api.get<PostDto>(`/api/posts/${id}`).then((r) => r.data),
   create: (body: CreatePostBody) =>
     api.post<PostDto>('/api/posts', body).then((r) => r.data),
+  update: (id: string, body: CreatePostBody) =>
+    api.patch<PostDto>(`/api/posts/${id}`, body).then((r) => r.data),
+  // Đăng NGAY bài lên tất cả nền tảng → trả post đã cập nhật trạng thái target.
+  publish: (id: string) =>
+    api.post<PostDto>(`/api/posts/${id}/publish`).then((r) => r.data),
   remove: (id: string) =>
     api.delete(`/api/posts/${id}`).then((r) => r.data),
   updateTargetStatus: (targetId: string, status: string) =>
@@ -174,5 +204,25 @@ export const postsApi = {
       .then((r) => r.data),
 };
 
+// ---- Media (upload Cloudinary qua NestJS) ----
+
+export interface MediaDto {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl: string | null;
+  fileName: string | null;
+}
+
+export const mediaApi = {
+  upload: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    // KHÔNG set Content-Type — axios tự thêm boundary cho multipart
+    return api.post<MediaDto>('/api/media', form).then((r) => r.data);
+  },
+};
+
 export default api;
+
 

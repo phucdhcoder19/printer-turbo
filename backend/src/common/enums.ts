@@ -13,6 +13,7 @@ export enum Platform {
   THREADS = 'threads',
   YOUTUBE = 'youtube',
   TWITTER = 'twitter',
+  WORDPRESS = 'wordpress',
 }
 
 // Trạng thái kết nối của 1 tài khoản nền tảng
