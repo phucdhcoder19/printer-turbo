@@ -17,37 +17,37 @@ export interface StatusConfig {
 
 export const STATUS_CONFIG: Record<PostStatus, StatusConfig> = {
   draft: {
-    label: 'Draft',
-    badge: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
-    dot: 'bg-gray-400',
+    label: 'Nháp',
+    badge: 'bg-stone-100 text-stone-600 dark:bg-stone-800/70 dark:text-stone-300',
+    dot: 'bg-stone-400',
   },
   scheduled: {
-    label: 'Scheduled',
+    label: 'Đã lên lịch',
     badge:
-      'bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-300',
-    dot: 'bg-purple-500',
+      'bg-amber-100/70 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+    dot: 'bg-amber-500',
   },
   publishing: {
-    label: 'Publishing',
-    badge: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300',
-    dot: 'bg-blue-500',
+    label: 'Đang đăng',
+    badge: 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
+    dot: 'bg-sky-500',
     pulse: true,
   },
   published: {
-    label: 'Published',
+    label: 'Đã đăng',
     badge:
-      'bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-300',
-    dot: 'bg-green-500',
+      'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    dot: 'bg-emerald-500',
   },
   partially_failed: {
-    label: 'Partial',
+    label: 'Đăng một phần',
     badge:
-      'bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-300',
+      'bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',
     dot: 'bg-orange-500',
   },
   failed: {
-    label: 'Failed',
-    badge: 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-300',
-    dot: 'bg-red-500',
+    label: 'Thất bại',
+    badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
+    dot: 'bg-rose-500',
   },
 };

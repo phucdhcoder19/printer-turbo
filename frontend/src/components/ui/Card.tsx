@@ -69,14 +69,16 @@ export function StatCard({
   return (
     <Card className={cn('p-5', className)}>
       <div className="flex items-start justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-button bg-primary/10 text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-button bg-muted text-foreground ring-1 ring-border">
           {icon}
         </div>
         {trend && (
           <span
             className={cn(
-              'inline-flex items-center gap-0.5 text-label font-semibold',
-              trend.direction === 'up' ? 'text-green-600' : 'text-red-500',
+              'inline-flex items-center gap-0.5 rounded-pill px-1.5 py-0.5 text-label font-semibold',
+              trend.direction === 'up'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
             )}
           >
             {trend.direction === 'up' ? (
@@ -88,10 +90,10 @@ export function StatCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-display font-bold tracking-tight">
+      <p className="mt-4 font-display text-[28px] font-semibold leading-none tracking-tight">
         {value}
       </p>
-      <p className="mt-0.5 text-label text-muted-foreground">{label}</p>
+      <p className="mt-1.5 text-label text-muted-foreground">{label}</p>
     </Card>
   );
 }

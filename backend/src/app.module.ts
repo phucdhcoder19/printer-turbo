@@ -12,6 +12,10 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { SocialAccountsModule } from "./modules/social-accounts/social-accounts.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { MediaModule } from "./modules/media/media.module";
+import { BullModule } from "@nestjs/bullmq";
+import { BullBoardModule } from "@bull-board/nestjs";
+import { ExpressAdapter } from "@bull-board/express";
+import { AnalyticsService } from "./modules/analytics/analytics.service";
 
 @Module({
   imports: [
@@ -49,6 +53,22 @@ import { MediaModule } from "./modules/media/media.module";
     SocialAccountsModule,
     AuthModule,
     MediaModule,
+    BullModule.forRoot({
+      // Kết nối Redis (dùng chung với FastAPI)
+      connection: {
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379", 10),
+      },
+    }),
+
+    // 4) Bull Board — dashboard web xem/retry/xoá job của hàng đợi.
+    // Truy cập tại http://localhost:3000/api/queues
+    // (route "/queues" + global prefix "/api" ở main.ts → "/api/queues").
+    // ⚠️ Không có auth — chỉ dùng cho môi trường dev cục bộ.
+    BullBoardModule.forRoot({
+      route: "/queues",
+      adapter: ExpressAdapter,
+    }),
   ],
 })
 export class AppModule {}

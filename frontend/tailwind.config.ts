@@ -26,6 +26,11 @@ const config: Config = {
           DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
           foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
         },
+        // Điểm nhấn hổ phách (AI, highlight, focus ring)
+        accent: {
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
+        },
         border: 'hsl(var(--border) / <alpha-value>)',
         input: 'hsl(var(--input) / <alpha-value>)',
         ring: 'hsl(var(--ring) / <alpha-value>)',
@@ -40,8 +45,9 @@ const config: Config = {
       fontFamily: {
         // Body mặc định
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // Heading/tiêu đề: dùng class `font-display`
-        display: ['Poppins', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Heading/tiêu đề (class `font-display`): serif hiện đại Fraunces
+        // → chất "tạp chí/biên tập", cao cấp, rời xa look SaaS-AI mặc định.
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       // Thang font nhất quán (chỉ size + line-height; weight áp riêng để tránh
       // xung đột khi kết hợp với font-medium/semibold).
@@ -56,15 +62,18 @@ const config: Config = {
         badge: ['11px', { lineHeight: '14px' }],
       },
       borderRadius: {
-        button: '8px',
-        card: '12px',
-        modal: '16px',
+        button: '10px',
+        card: '14px',
+        modal: '18px',
         pill: '9999px',
       },
+      // Shadow tông ấm (stone) + nhiều lớp → mềm, có chiều sâu, không "phẳng AI"
       boxShadow: {
-        card: '0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 3px 0 rgb(15 23 42 / 0.04)',
-        modal: '0 16px 48px -12px rgb(15 23 42 / 0.30)',
-        dropdown: '0 8px 24px -8px rgb(15 23 42 / 0.18)',
+        card: '0 1px 2px -1px rgb(28 25 23 / 0.06), 0 4px 12px -4px rgb(28 25 23 / 0.08)',
+        'card-hover':
+          '0 2px 4px -2px rgb(28 25 23 / 0.08), 0 12px 28px -8px rgb(28 25 23 / 0.14)',
+        modal: '0 24px 60px -16px rgb(28 25 23 / 0.34)',
+        dropdown: '0 8px 28px -8px rgb(28 25 23 / 0.20)',
       },
       zIndex: {
         // Thang z-index rõ ràng (theo UX guideline)

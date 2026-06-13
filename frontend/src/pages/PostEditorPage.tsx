@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Hash, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, ExternalLink, Hash, Send, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, Textarea } from '../components/ui/Input';
 import { Field } from '../components/ui/Form';
@@ -8,16 +8,20 @@ import { Checkbox } from '../components/ui/Choice';
 import { RichTextEditor } from '../components/editor/RichTextEditor';
 import { MediaUploader } from '../components/media/MediaUploader';
 import { PlatformBadge } from '../components/ui/PlatformBadge';
+import { StatusBadge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { cn } from '../lib/cn';
 import {
+  aiApi,
   postsApi,
   type CreatePostBody,
   type MediaDto,
   type PostDto,
+  type PostTargetDto,
 } from '../lib/api';
 import { PLATFORMS, type Platform } from '../constants/platforms';
+import type { PostStatus } from '../constants/statuses';
 
 // Nền tảng có thể chọn trong editor (wordpress + facebook đăng thật được).
 const EDITOR_PLATFORMS: Platform[] = [
@@ -70,6 +74,12 @@ export function PostEditorPage() {
   const [scheduleAt, setScheduleAt] = useState('');
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [aiBusy, setAiBusy] = useState<null | 'caption' | 'hashtags'>(null);
+  // Trạng thái bài đã lưu (để biết target nào đã đăng → không cho đăng lại)
+  const [postStatus, setPostStatus] = useState<PostStatus | null>(null);
+  const [savedTargets, setSavedTargets] = useState<
+    Partial<Record<Platform, PostTargetDto>>
+  >({});
 
   // Sửa bài: load bài cũ rồi điền sẵn form
   useEffect(() => {
@@ -97,6 +107,10 @@ export function PostEditorPage() {
         setCaptions(caps);
         setTags(tgs);
         setScheduleAt(sched);
+        setPostStatus(post.status);
+        const byPlatform: Partial<Record<Platform, PostTargetDto>> = {};
+        for (const t of post.targets) byPlatform[t.platform] = t;
+        setSavedTargets(byPlatform);
         if (post.targets[0]) setActive(post.targets[0].platform);
       })
       .catch(() => toast('error', 'Không tải được bài đăng'))
@@ -106,6 +120,12 @@ export function PostEditorPage() {
   const activeCaption = captions[active] ?? '';
   const activeTags = tags[active] ?? '';
   const isIncluded = included.has(active);
+  const activeTarget = savedTargets[active];
+  const activePublished = activeTarget?.status === 'published';
+  // Bài đã có ÍT NHẤT 1 nền tảng đăng thành công → khoá nút "Đăng ngay"
+  const hasPublished = Object.values(savedTargets).some(
+    (t) => t?.status === 'published',
+  );
 
   function toggleInclude() {
     setIncluded((s) => {
@@ -116,15 +136,37 @@ export function PostEditorPage() {
     });
   }
 
-  function aiWriteCaption() {
-    setBaseCaption(
-      'Khám phá điều mới mẻ hôm nay ✨ Đừng bỏ lỡ ưu đãi đặc biệt dành riêng cho bạn!',
-    );
-    toast('success', 'AI đã gợi ý caption');
+  async function aiWriteCaption() {
+    if (!title.trim()) {
+      toast('error', 'Nhập tiêu đề trước để AI hiểu chủ đề');
+      return;
+    }
+    setAiBusy('caption');
+    try {
+      const res = await aiApi.caption({ topic: title.trim(), platform: active });
+      setBaseCaption(res.caption);
+      toast('success', 'AI đã gợi ý caption');
+    } catch {
+      toast('error', 'AI gợi ý caption thất bại');
+    } finally {
+      setAiBusy(null);
+    }
   }
-  function aiSuggestHashtags() {
-    setTags((t) => ({ ...t, [active]: '#sale #newproduct #trending' }));
-    toast('success', `AI đã gợi ý hashtag cho ${PLATFORMS[active].label}`);
+  async function aiSuggestHashtags() {
+    if (!title.trim()) {
+      toast('error', 'Nhập tiêu đề trước để AI hiểu chủ đề');
+      return;
+    }
+    setAiBusy('hashtags');
+    try {
+      const res = await aiApi.caption({ topic: title.trim(), platform: active });
+      setTags((t) => ({ ...t, [active]: res.hashtags.join(' ') }));
+      toast('success', `AI đã gợi ý hashtag cho ${PLATFORMS[active].label}`);
+    } catch {
+      toast('error', 'AI gợi ý hashtag thất bại');
+    } finally {
+      setAiBusy(null);
+    }
   }
 
   /**
@@ -188,6 +230,10 @@ export function PostEditorPage() {
 
   // Đăng NGAY: lưu trước (không lịch) → gọi publish → tổng hợp kết quả.
   async function publishNow() {
+    if (hasPublished) {
+      toast('info', 'Bài này đã đăng — không thể đăng lại');
+      return;
+    }
     setPublishing(true);
     try {
       const saved = await persist();
@@ -246,6 +292,7 @@ export function PostEditorPage() {
         <h1 className="text-title font-display font-bold">
           {editing ? 'Sửa bài đăng' : 'Soạn bài đăng'}
         </h1>
+        {postStatus && <StatusBadge status={postStatus} />}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -288,6 +335,8 @@ export function PostEditorPage() {
               variant="secondary"
               size="sm"
               leftIcon={<Sparkles className="h-4 w-4" />}
+              loading={aiBusy === 'caption'}
+              disabled={aiBusy !== null}
               onClick={aiWriteCaption}
             >
               Viết caption
@@ -296,6 +345,8 @@ export function PostEditorPage() {
               variant="secondary"
               size="sm"
               leftIcon={<Hash className="h-4 w-4" />}
+              loading={aiBusy === 'hashtags'}
+              disabled={aiBusy !== null}
               onClick={aiSuggestHashtags}
             >
               Gợi ý hashtag
@@ -328,12 +379,31 @@ export function PostEditorPage() {
             </div>
 
             <div className="flex flex-col gap-4 p-4">
-              <label className="flex cursor-pointer items-center gap-2">
-                <Checkbox checked={isIncluded} onChange={toggleInclude} />
-                <span className="text-label font-medium">
-                  Đăng bài lên {PLATFORMS[active].label}
-                </span>
-              </label>
+              {activePublished ? (
+                <div className="flex items-center justify-between rounded-button border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+                  <span className="flex items-center gap-2 text-label font-medium text-emerald-700 dark:text-emerald-300">
+                    <Check className="h-4 w-4" />
+                    Đã đăng lên {PLATFORMS[active].label}
+                  </span>
+                  {activeTarget?.externalUrl && (
+                    <a
+                      href={activeTarget.externalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-label font-medium text-emerald-700 underline dark:text-emerald-300"
+                    >
+                      Xem bài <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Checkbox checked={isIncluded} onChange={toggleInclude} />
+                  <span className="text-label font-medium">
+                    Đăng bài lên {PLATFORMS[active].label}
+                  </span>
+                </label>
+              )}
 
               <Field label={`Caption cho ${PLATFORMS[active].label}`}>
                 {({ id: fid }) => (
@@ -441,11 +511,11 @@ export function PostEditorPage() {
           </Button>
           <Button
             loading={publishing}
-            disabled={busy}
+            disabled={busy || hasPublished}
             leftIcon={<Send className="h-4 w-4" />}
             onClick={publishNow}
           >
-            Đăng ngay
+            {hasPublished ? 'Đã đăng' : 'Đăng ngay'}
           </Button>
         </div>
       </div>

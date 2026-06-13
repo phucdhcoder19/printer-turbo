@@ -1,16 +1,29 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { AiService } from "./ai.service";
+import type { Platform } from "../../common/enums";
 
-// Route: /api/ai
-@Controller('ai')
+interface RequestUser {
+  userId: string;
+  teamId: string;
+  role: string;
+}
+
+@UseGuards(JwtAuthGuard)
+@Controller("ai")
 export class AiController {
-  // POST /api/ai/caption  { topic, platform }
-  @Post('caption')
-  suggestCaption(@Body() body: { topic?: string; platform?: string }) {
-    return {
-      message: 'AI module — sinh caption/hashtag sẽ được implement ở bước sau',
-      input: body,
-      caption: '',
-      hashtags: [],
-    };
+  constructor(private readonly ai: AiService) {}
+
+  // POST /api/ai/caption  { topic, platform?, tone? }
+  @Post("caption")
+  caption(
+    @CurrentUser() user: RequestUser,
+    @Body() body: { topic?: string; platform?: Platform; tone?: string },
+  ) {
+    return this.ai.caption(
+      { topic: body.topic ?? "", platform: body.platform, tone: body.tone },
+      user.userId,
+    );
   }
 }

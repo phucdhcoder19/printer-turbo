@@ -2,15 +2,24 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { Spinner } from './Spinner';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'accent'
+  | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  primary:
+    'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:translate-y-px',
   secondary:
-    'border border-border bg-transparent text-primary hover:bg-muted',
+    'border border-border bg-card text-foreground shadow-sm hover:bg-muted',
   ghost: 'text-muted-foreground hover:bg-muted hover:text-foreground',
-  danger: 'bg-red-500 text-white hover:bg-red-600',
+  // Nút AI / nhấn — hổ phách
+  accent:
+    'bg-accent text-accent-foreground shadow-sm hover:bg-accent/90 active:translate-y-px',
+  danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700',
 };
 
 const SIZES: Record<ButtonSize, string> = {

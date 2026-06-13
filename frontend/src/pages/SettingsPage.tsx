@@ -20,20 +20,20 @@ import type { ConnectionStatus } from '../lib/api';
 
 const STATUS_BADGE: Record<ConnectionStatus, { label: string; cls: string }> = {
   connected: {
-    label: 'Connected',
-    cls: 'bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-300',
+    label: 'Đã kết nối',
+    cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
   },
   expired: {
-    label: 'Expired',
-    cls: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300',
+    label: 'Hết hạn',
+    cls: 'bg-amber-100/70 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
   },
   pending: {
-    label: 'Pending',
-    cls: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300',
+    label: 'Đang chờ',
+    cls: 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
   },
   revoked: {
-    label: 'Revoked',
-    cls: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+    label: 'Đã thu hồi',
+    cls: 'bg-stone-100 text-stone-600 dark:bg-stone-800/70 dark:text-stone-300',
   },
 };
 

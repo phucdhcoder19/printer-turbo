@@ -19,6 +19,13 @@ export default () => ({
     url: process.env.FASTAPI_URL ?? "http://localhost:8080",
   },
 
+  // LLM cho gợi ý caption/hashtag — mặc định Ollama qwen3:4b (đang chạy sẵn cho video)
+  llm: {
+    baseUrl: process.env.LLM_BASE_URL ?? "http://localhost:11434/v1",
+    model: process.env.LLM_MODEL ?? "qwen3:4b",
+    apiKey: process.env.LLM_API_KEY ?? "ollama", // Ollama không kiểm key
+  },
+
   jwt: {
     secret: process.env.JWT_SECRET ?? "change_me_in_production",
     expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",

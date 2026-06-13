@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
@@ -122,9 +118,7 @@ export class PostPublishService {
         externalId = res.externalId;
         externalUrl = res.url;
       } else {
-        throw new Error(
-          `Chưa hỗ trợ đăng tự động cho ${target.platform}`,
-        );
+        throw new Error(`Chưa hỗ trợ đăng tự động cho ${target.platform}`);
       }
 
       target.status = TargetStatus.PUBLISHED;
@@ -170,7 +164,10 @@ export class PostPublishService {
     if (!account.accessToken) {
       throw new Error("Token rỗng — hãy kết nối lại kênh");
     }
-    return decrypt(account.accessToken, this.config.get<string>("encryptionKey", ""));
+    return decrypt(
+      account.accessToken,
+      this.config.get<string>("encryptionKey", ""),
+    );
   }
 
   /** Caption (text) + hashtags → message cho Facebook. */
@@ -206,5 +203,41 @@ export class PostPublishService {
       out.push(m);
     }
     return out;
+  }
+
+  async publishTargetById(targetId: string): Promise<void> {
+    const target = await this.targetRepo.findOne({
+      where: { id: targetId },
+      relations: { post: { media: { media: true } } },
+    });
+    if (!target) return;
+    if (target.status === TargetStatus.PUBLISHED) return;
+
+    const post = await this.postRepo.findOne({
+      where: { id: target.postId },
+      relations: { media: { media: true } },
+    });
+    if (!post) return;
+
+    const media: FacebookMediaInput[] = (post.media ?? [])
+      .sort((a, b) => a.position - b.position)
+      .filter((pm) => pm.media)
+      .map((pm) => ({
+        type: pm.media.type === "video" ? "video" : "image",
+        url: pm.media.url,
+      }));
+    const firstImageUrl =
+      media.find((m) => m.type === "image")?.url ?? null;
+
+    await this.publishTarget(target, post, media, firstImageUrl);
+
+    const fresh = await this.targetRepo.find({ where: { postId: post.id } });
+    post.status = this.posts.computePostStatus(fresh);
+    await this.postRepo.save(post);
+
+    // Nếu vừa thất bại → ném để BullMQ retry theo `attempts`
+    if (target.status === TargetStatus.FAILED) {
+      throw new Error(target.errorMessage ?? "Đăng thất bại");
+    }
   }
 }

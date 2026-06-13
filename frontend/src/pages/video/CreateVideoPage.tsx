@@ -1,4 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Sparkles,
+} from 'lucide-react';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Field } from '../../components/ui/Form';
+import { Toggle } from '../../components/ui/Choice';
+import { Button } from '../../components/ui/Button';
+import { cn } from '../../lib/cn';
 import { videoApi, type TaskResponse } from '../../lib/api';
 
 /**
@@ -22,6 +36,9 @@ export function CreateVideoPage() {
       pollRef.current = null;
     }
   }
+
+  const isRunning =
+    !!task && task.state !== 'complete' && task.state !== 'failed';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,68 +70,73 @@ export function CreateVideoPage() {
         }
       }, 2000);
     } catch (err: unknown) {
-      setError(
-        'Không tạo được video. Kiểm tra NestJS + FastAPI đã chạy chưa.',
-      );
+      setError('Không tạo được video. Kiểm tra NestJS + FastAPI đã chạy chưa.');
       console.error(err);
     }
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-1">🎥 Tạo Video</h1>
-      <p className="text-slate-500 mb-6">
-        Nhập chủ đề, hệ thống tự sinh kịch bản → giọng đọc → phụ đề → ghép video.
-      </p>
+    <div className="mx-auto max-w-2xl">
+      <PageHeader
+        title="Tạo video"
+        description="Nhập chủ đề — hệ thống tự sinh kịch bản → giọng đọc → phụ đề → ghép video."
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4"
-      >
-        <div>
-          <label className="block text-sm font-medium mb-1">Chủ đề video</label>
-          <input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="VD: Cà phê Việt Nam"
-            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Field label="Chủ đề video">
+            {({ id }) => (
+              <Input
+                id={id}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="VD: Cà phê Việt Nam"
+              />
+            )}
+          </Field>
 
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-1">Tỉ lệ</label>
-            <select
-              value={aspect}
-              onChange={(e) => setAspect(e.target.value as typeof aspect)}
-              className="w-full border border-slate-300 rounded-md px-3 py-2"
-            >
-              <option value="9:16">9:16 (Dọc)</option>
-              <option value="16:9">16:9 (Ngang)</option>
-              <option value="1:1">1:1 (Vuông)</option>
-            </select>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
+            <Field label="Tỉ lệ khung hình" className="flex-1">
+              {({ id }) => (
+                <Select
+                  id={id}
+                  value={aspect}
+                  onChange={(e) => setAspect(e.target.value as typeof aspect)}
+                >
+                  <option value="9:16">9:16 — Dọc (TikTok, Reels)</option>
+                  <option value="16:9">16:9 — Ngang (YouTube)</option>
+                  <option value="1:1">1:1 — Vuông (Feed)</option>
+                </Select>
+              )}
+            </Field>
+
+            <label className="flex h-10 items-center gap-2.5 rounded-button border border-border bg-muted/40 px-3.5">
+              <Toggle
+                checked={subtitle}
+                onCheckedChange={setSubtitle}
+                aria-label="Bật phụ đề"
+              />
+              <span className="text-body font-medium">Phụ đề</span>
+            </label>
           </div>
-          <label className="flex items-end gap-2 pb-2">
-            <input
-              type="checkbox"
-              checked={subtitle}
-              onChange={(e) => setSubtitle(e.target.checked)}
-            />
-            <span className="text-sm">Hiện phụ đề</span>
-          </label>
-        </div>
 
-        <button
-          type="submit"
-          className="bg-indigo-600 text-white px-5 py-2 rounded-md font-medium hover:bg-indigo-700"
-        >
-          🚀 Tạo Video
-        </button>
-      </form>
+          <div className="flex justify-end pt-1">
+            <Button
+              type="submit"
+              variant="accent"
+              loading={isRunning}
+              leftIcon={<Sparkles className="h-4 w-4" />}
+            >
+              {isRunning ? 'Đang tạo video…' : 'Tạo video'}
+            </Button>
+          </div>
+        </form>
+      </Card>
 
       {error && (
-        <div className="mt-4 bg-red-50 text-red-700 border border-red-200 rounded-md p-3 text-sm">
-          {error}
+        <div className="mt-4 flex items-start gap-2 rounded-card border border-rose-200 bg-rose-50 p-3.5 text-body text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{error}</span>
         </div>
       )}
 
@@ -123,27 +145,59 @@ export function CreateVideoPage() {
   );
 }
 
+const STATE_META: Record<string, { label: string; cls: string }> = {
+  pending: { label: 'Đang chờ', cls: 'bg-stone-100 text-stone-600' },
+  processing: { label: 'Đang xử lý', cls: 'bg-amber-100/70 text-amber-700' },
+  complete: { label: 'Hoàn tất', cls: 'bg-emerald-50 text-emerald-700' },
+  failed: { label: 'Thất bại', cls: 'bg-rose-50 text-rose-700' },
+};
+
 function ProgressCard({ task }: { task: TaskResponse }) {
+  const meta = STATE_META[task.state] ?? {
+    label: task.state,
+    cls: 'bg-muted text-muted-foreground',
+  };
+  const running = task.state !== 'complete' && task.state !== 'failed';
+
   return (
-    <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div className="flex justify-between text-sm mb-2">
-        <span className="font-medium">Task: {task.task_id}</span>
-        <span className="text-slate-500">{task.state}</span>
+    <Card className="mt-6 p-6">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="truncate font-mono text-label text-muted-foreground">
+          {task.task_id}
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-badge font-semibold',
+            meta.cls,
+          )}
+        >
+          {running && <Loader2 className="h-3 w-3 animate-spin" />}
+          {meta.label}
+        </span>
       </div>
-      <div className="w-full bg-slate-200 rounded-full h-2.5">
-        <div
-          className="bg-indigo-600 h-2.5 rounded-full transition-all"
-          style={{ width: `${task.progress}%` }}
-        />
+
+      <div className="flex items-center gap-3">
+        <div className="h-2 flex-1 overflow-hidden rounded-pill bg-muted">
+          <div
+            className="h-full rounded-pill bg-accent transition-all duration-300"
+            style={{ width: `${task.progress}%` }}
+          />
+        </div>
+        <span className="w-10 shrink-0 text-right text-label font-semibold tabular-nums">
+          {task.progress}%
+        </span>
       </div>
+
       {task.message && (
-        <p className="text-sm text-slate-600 mt-2">{task.message}</p>
+        <p className="mt-3 text-body text-muted-foreground">{task.message}</p>
       )}
+
       {task.state === 'complete' && task.videos?.[0] && (
-        <p className="text-sm text-green-700 mt-3">
-          ✅ Xong: {task.videos[0]}
-        </p>
+        <div className="mt-4 flex items-center gap-2 rounded-button border border-emerald-200 bg-emerald-50 p-3 text-body text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="truncate">Đã tạo xong: {task.videos[0]}</span>
+        </div>
       )}
-    </div>
+    </Card>
   );
 }

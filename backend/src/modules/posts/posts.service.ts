@@ -6,7 +6,8 @@ import { Repository } from "typeorm";
 import { Post } from "./entities/post.entity";
 import { PostMedia } from "./entities/post-media.entity";
 import { CreatePostDto } from "./dto/create-post.dto";
-
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 // Quan hệ dùng chung khi đọc 1 bài (kèm targets + media đã gắn).
 // (Thứ tự media theo position được sort ở client/khi publish, tránh phụ thuộc
 //  order lồng quan hệ của TypeORM cho OneToMany.)
@@ -24,6 +25,7 @@ export class PostsService {
     @InjectRepository(Post) private postRepo: Repository<Post>,
     @InjectRepository(PostTarget) private targetRepo: Repository<PostTarget>,
     @InjectRepository(PostMedia) private postMediaRepo: Repository<PostMedia>,
+    @InjectQueue("publish") private publishQueue: Queue,
   ) {}
 
   async create(
@@ -51,7 +53,10 @@ export class PostsService {
     post.status = this.computePostStatus(targets);
     const saved = await this.postRepo.save(post);
     await this.syncMedia(saved.id, createPostDto.mediaIds);
-    return this.findOne(saved.id);
+    const full = await this.findOne(saved.id);
+    // Tạo job cho những target đã lên lịch (nếu có).
+    await Promise.all(full.targets.map((t) => this.scheduleJob(t)));
+    return full;
   }
 
   findAll(teamId: string): Promise<Post[]> {
@@ -104,6 +109,13 @@ export class PostsService {
     // Không cho update content
     // Thay TOÀN BỘ targets: xoá cũ → tạo mới (đơn giản, chắc đúng)
     if (updatePostDto.targets) {
+      // Dọn job của target CŨ trước khi xoá (id cũ sắp biến mất)
+      await Promise.all(
+        post.targets.map((t) =>
+          this.publishQueue.remove(`target-${t.id}`).catch(() => {}),
+        ),
+      );
+
       await this.targetRepo.delete({ postId: id });
       const targets = updatePostDto.targets?.map((t) =>
         this.targetRepo.create({
@@ -120,12 +132,24 @@ export class PostsService {
     post.status = this.computePostStatus(post.targets);
     await this.postRepo.save(post);
     await this.syncMedia(id, updatePostDto.mediaIds);
-    return this.findOne(id);
+    const fullPost = await this.findOne(id);
+    // Tạo job cho những target đã lên lịch (nếu có).
+    await Promise.all(fullPost.targets.map((t) => this.scheduleJob(t)));
+    return fullPost;
   }
 
   async remove(id: string): Promise<{ success: boolean }> {
-    const post = await this.postRepo.findOne({ where: { id } });
+    const post = await this.postRepo.findOne({
+      where: { id },
+      relations: { targets: true }, // cần targets để biết job nào phải dọn
+    });
     if (!post) throw new NotFoundException("Post not found");
+    // Xoá job đang chờ của các target trước khi xoá bài
+    await Promise.all(
+      post.targets.map((t) =>
+        this.publishQueue.remove(`target-${t.id}`).catch(() => {}),
+      ),
+    );
     await this.postRepo.remove(post);
     return { success: true };
   }
@@ -183,5 +207,33 @@ export class PostsService {
     }
     if (has(TargetStatus.SCHEDULED)) return PostStatus.SCHEDULED;
     return PostStatus.DRAFT;
+  }
+
+  private async scheduleJob(target: PostTarget): Promise<void> {
+    const jobId = `target-${target.id}`;
+    await this.publishQueue.remove(jobId).catch(() => {}); // xoá job cũ nếu có (đổi giờ)
+    if (target.status !== TargetStatus.SCHEDULED || !target.scheduledAt) return; // chỉ tạo job nếu đang ở trạng thái đã lên lịch
+    const delay = target.scheduledAt.getTime() - Date.now();
+    if (delay <= 0) {
+      // Nếu thời gian đã qua, chạy ngay
+      await this.publishQueue.add(
+        "publishTarget",
+        { targetId: target.id },
+        { jobId, removeOnComplete: true, removeOnFail: true },
+      );
+    } else {
+      // Tạo job với delay
+      await this.publishQueue.add(
+        "publish-target",
+        { targetId: target.id },
+        {
+          delay,
+          jobId, // 1 target = 1 job (tránh trùng)
+          attempts: target.maxRetries || 3,
+          backoff: { type: "exponential", delay: 60_000 }, // lỗi → thử lại sau 1', 2', 4'
+          removeOnComplete: true,
+        },
+      );
+    }
   }
 }

@@ -57,12 +57,12 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-primary font-display font-bold text-primary-foreground">
+      <div className="flex h-16 items-center gap-2.5 px-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-primary font-display text-[17px] font-semibold text-primary-foreground shadow-sm">
           M
         </div>
         {!collapsed && (
-          <span className="text-card-title font-display font-semibold">
+          <span className="font-display text-[17px] font-semibold tracking-[-0.01em]">
             Marketing Hub
           </span>
         )}
@@ -73,7 +73,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         {GROUPS.map((group) => (
           <div key={group.title}>
             {!collapsed && (
-              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
                 {group.title}
               </p>
             )}
@@ -145,7 +145,7 @@ function NavItem({
           'flex items-center gap-3 rounded-button px-3 py-2 text-body font-medium transition-colors',
           collapsed && 'justify-center px-0',
           isActive
-            ? 'bg-primary text-primary-foreground'
+            ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground',
         )
       }

@@ -14,7 +14,7 @@ export function ChannelsSection({ collapsed }: { collapsed: boolean }) {
     <div>
       {!collapsed && (
         <div className="flex items-center justify-between px-3 pb-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
             Kênh
           </p>
           <span className="text-[11px] text-muted-foreground">
@@ -43,7 +43,7 @@ export function ChannelsSection({ collapsed }: { collapsed: boolean }) {
                 className={cn(
                   'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-pill border-2 border-card',
                   c.connectionStatus === 'connected'
-                    ? 'bg-green-500'
+                    ? 'bg-emerald-500'
                     : 'bg-amber-500',
                 )}
               />

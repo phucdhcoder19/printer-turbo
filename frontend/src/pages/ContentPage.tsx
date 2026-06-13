@@ -140,12 +140,12 @@ export function ContentPage() {
           className="w-44"
         >
           <option value="all">Tất cả trạng thái</option>
-          <option value="draft">Draft</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="publishing">Publishing</option>
-          <option value="published">Published</option>
-          <option value="partially_failed">Partial</option>
-          <option value="failed">Failed</option>
+          <option value="draft">Nháp</option>
+          <option value="scheduled">Đã lên lịch</option>
+          <option value="publishing">Đang đăng</option>
+          <option value="published">Đã đăng</option>
+          <option value="partially_failed">Đăng một phần</option>
+          <option value="failed">Thất bại</option>
         </Select>
       </Card>
 

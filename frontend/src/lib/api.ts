@@ -150,6 +150,7 @@ export interface PostTargetDto {
   hashtags: string[];
   status: PostStatus;
   scheduledAt: string | null;
+  publishedAt: string | null;
   externalUrl: string | null;
   errorMessage: string | null;
   currentLikes: number;
@@ -221,6 +222,67 @@ export const mediaApi = {
     // KHÔNG set Content-Type — axios tự thêm boundary cho multipart
     return api.post<MediaDto>('/api/media', form).then((r) => r.data);
   },
+};
+
+// ---- Analytics ----
+
+export type AnalyticsRange = '7d' | '30d' | '90d';
+
+export interface AnalyticsSummary {
+  posts: number; // số bài trong khoảng
+  engagement: number; // tổng like + comment + share
+  videos: number; // số video đã tạo (media source = mpt_generated)
+  scheduled: number; // số target sắp đăng
+  trends?: { posts: number; engagement: number }; // % so kỳ trước (âm = giảm)
+}
+
+export interface EngagementPoint {
+  day: string; // nhãn trục X (vd "T2", "05/06")
+  value: number; // tổng tương tác trong ngày
+}
+
+export interface PlatformStat {
+  platform: Platform;
+  engagement: number;
+}
+
+export interface TopPost {
+  id: string;
+  title: string;
+  platform: Platform;
+  engagement: number;
+}
+
+export const analyticsApi = {
+  summary: (range: AnalyticsRange = '7d') =>
+    api
+      .get<AnalyticsSummary>('/api/analytics/summary', { params: { range } })
+      .then((r) => r.data),
+  engagement: (range: AnalyticsRange = '7d') =>
+    api
+      .get<EngagementPoint[]>('/api/analytics/engagement', { params: { range } })
+      .then((r) => r.data),
+  byPlatform: (range: AnalyticsRange = '7d') =>
+    api
+      .get<PlatformStat[]>('/api/analytics/by-platform', { params: { range } })
+      .then((r) => r.data),
+  topPosts: (range: AnalyticsRange = '7d', limit = 5) =>
+    api
+      .get<TopPost[]>('/api/analytics/top-posts', { params: { range, limit } })
+      .then((r) => r.data),
+};
+
+// ---- AI (gợi ý caption / hashtag) ----
+
+export interface AiCaptionResult {
+  caption: string;
+  hashtags: string[];
+}
+
+export const aiApi = {
+  // topic = chủ đề bài (thường là tiêu đề); platform để AI viết hợp giọng nền tảng
+  caption: (body: { topic: string; platform?: Platform; tone?: string }) =>
+    api.post<AiCaptionResult>('/api/ai/caption', body).then((r) => r.data),
 };
 
 export default api;

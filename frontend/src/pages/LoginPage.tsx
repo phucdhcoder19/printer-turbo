@@ -50,13 +50,22 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-[400px] rounded-card border border-border bg-card p-8 shadow-card">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+      {/* Phông nền ấm, nhã — không chói, không "glow AI" */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(58%_46%_at_50%_-8%,hsl(var(--accent)/0.10),transparent_72%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-[radial-gradient(50%_80%_at_50%_120%,hsl(var(--muted)),transparent)]"
+      />
+      <div className="relative w-full max-w-[400px] rounded-card border border-border bg-card p-8 shadow-card-hover">
         <div className="mb-6 flex flex-col items-center gap-2">
-          <div className="flex h-11 w-11 items-center justify-center rounded-button bg-primary text-section font-display font-bold text-primary-foreground">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[15px] bg-primary font-display text-[22px] font-semibold text-primary-foreground shadow-sm">
             M
           </div>
-          <h1 className="text-section font-display font-semibold">
+          <h1 className="mt-1 font-display text-[22px] font-semibold tracking-[-0.01em]">
             Marketing Hub
           </h1>
           <p className="text-body text-muted-foreground">

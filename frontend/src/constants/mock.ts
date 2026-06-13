@@ -24,28 +24,6 @@ export const MOCK_POSTS: MockPost[] = [
   { id: '7', title: 'Mini game tặng quà', platforms: ['instagram', 'facebook'], status: 'publishing', date: '07/06 10:00', likes: 540, comments: 320, shares: 88 },
 ];
 
-export const MOCK_ENGAGEMENT_7D = [
-  { day: 'T2', value: 420 },
-  { day: 'T3', value: 560 },
-  { day: 'T4', value: 480 },
-  { day: 'T5', value: 720 },
-  { day: 'T6', value: 690 },
-  { day: 'T7', value: 910 },
-  { day: 'CN', value: 1020 },
-];
-
-export interface PlatformStat {
-  platform: Platform;
-  engagement: number;
-}
-
-export const MOCK_PLATFORM_STATS: PlatformStat[] = [
-  { platform: 'facebook', engagement: 4200 },
-  { platform: 'instagram', engagement: 6800 },
-  { platform: 'tiktok', engagement: 9100 },
-  { platform: 'youtube', engagement: 3500 },
-];
-
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -63,19 +41,6 @@ export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
   { id: 'e5', title: 'Mini game', platform: 'instagram', status: 'publishing', day: 7, time: '10:00' },
   { id: 'e6', title: 'Hướng dẫn dùng', platform: 'youtube', status: 'published', day: 3, time: '18:30' },
   { id: 'e7', title: 'Teaser sản phẩm', platform: 'threads', status: 'draft', day: 15, time: '11:00' },
-];
-
-export interface TopPost {
-  id: string;
-  title: string;
-  platform: Platform;
-  engagement: number;
-}
-
-export const MOCK_TOP_POSTS: TopPost[] = [
-  { id: 't1', title: 'Hướng dẫn sử dụng chi tiết', platform: 'youtube', engagement: 3530 },
-  { id: 't2', title: 'Ra mắt bộ sưu tập hè 2026', platform: 'instagram', engagement: 1371 },
-  { id: 't3', title: 'Mini game tặng quà', platform: 'facebook', engagement: 948 },
 ];
 
 export const MOCK_AI_INSIGHTS = [
